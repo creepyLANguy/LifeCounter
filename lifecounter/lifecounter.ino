@@ -206,13 +206,38 @@ void UpdateDisplay()
   display.display();
 }
 
+bool IsRestarting() 
+{
+  SWstate = digitalRead(encoderSW);
+  if (SWstate == LOW && restarting == false)
+  {
+    restarting = true;    
+  }  
+  else if (SWstate == HIGH && restarting == true) 
+  {
+    ESP.restart();
+  }
+  // else if (restarting == true) {
+  //   return true;
+  // }
+
+  return restarting;
+}
+
 void CheckRotary() 
 {
+  int currentCLK = digitalRead(encoderCLK);
+  int currentDT = digitalRead(encoderCLK);
+  
+  Serial.println(currentCLK);
+  Serial.println(currentDT);
+  Serial.println();
+
   if (previousCLK == 0 && previousDT == 1) 
   {
-    if (digitalRead(encoderCLK) == 1)
+    if (currentCLK == 1)
     {
-      if (digitalRead(encoderDT) == 0)
+      if (currentDT == 0)
       {
         IncrementLife();
       }
@@ -226,9 +251,9 @@ void CheckRotary()
   }
   else if (previousCLK == 1 && previousDT == 0) 
   {
-    if (digitalRead(encoderCLK) == 0)
+    if (currentCLK == 0)
     {
-      if (digitalRead(encoderDT) == 1)
+      if (currentDT == 1)
       {
         IncrementLife();
       }
@@ -242,9 +267,9 @@ void CheckRotary()
   }
   else if (previousCLK == 1 && previousDT == 1)
   {
-    if (digitalRead(encoderCLK) == 0)
+    if (currentCLK == 0)
     {
-      if (digitalRead(encoderDT) == 1)
+      if (currentDT == 1)
       {
         IncrementLife();
       }
@@ -256,11 +281,11 @@ void CheckRotary()
       UpdateDisplay();
     }
   }
-    else if (previousCLK == 1 && previousDT == 1)
+  else if (previousCLK == 1 && previousDT == 1)
   {
-    if (digitalRead(encoderCLK) == 0)
+    if (currentCLK == 0)
     {
-      if (digitalRead(encoderDT) == 1)
+      if (currentDT == 1)
       {
         IncrementLife();
       }
@@ -274,9 +299,9 @@ void CheckRotary()
   }  
   else if (previousCLK == 0 && previousDT == 0)
   {
-    if (digitalRead(encoderCLK) == 1)
+    if (currentCLK == 1)
     {
-      if (digitalRead(encoderDT) == 0)
+      if (currentDT == 0)
       {
         IncrementLife();
       }
@@ -288,32 +313,24 @@ void CheckRotary()
       UpdateDisplay();
     }
   }
+
+  
+    previousCLK = currentCLK;
+    previousDT = currentDT;
 }
 
 void loop() 
 {
-  SWstate = digitalRead(encoderSW);
-  if (SWstate == LOW && restarting == false)
+  if (IsRestarting()) 
   {
-    restarting = true;    
-    return;
-  }  
-  else if (SWstate == HIGH && restarting == true) 
-  {
-    ESP.restart();
-    return;
-  }
-  else if (restarting == true) {
     return;
   }
 
-  if (millis() - timeOfLastDebounce > DelayOfDebounce) 
+  if (millis() - timeOfLastDebounce <= DelayOfDebounce) 
   {
-    CheckRotary();
-
-    previousCLK = digitalRead(encoderCLK);
-    previousDT = digitalRead(encoderDT);
-
-    timeOfLastDebounce = millis();
+    return;
   }
+
+  CheckRotary();
+  timeOfLastDebounce = millis();
 }
