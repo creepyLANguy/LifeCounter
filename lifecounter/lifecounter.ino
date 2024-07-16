@@ -3,8 +3,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
 
 // Declaration for SSD1306 display connected using I2C
 #define OLED_RESET     -1 // Reset pin
@@ -18,22 +18,18 @@ int16_t cursorX = 24;
 int16_t cursorY = 8;
 
  // Rotary Encoder Inputs
- #define encoderCLK 16  //D0
- #define encoderDT 2    //D4
- #define encoderSW 0    // D3
+ #define pinA 16  //D0
+ #define pinB 2    //D4
+ #define pinPush 0    // D3
 
-int SWstate = 0;
+int currentA;
+int currentB;
+int previousA;
 
-long timeOfLastDebounce = 0;
-int DelayOfDebounce = 0.01;
-
-int previousCLK;
-int previousDT;
-
+int pushState = 0;
 bool restarting = false;
 
-// 'Project1', 128x64px
-const unsigned char zeroImage [] PROGMEM = 
+const unsigned char deathImage [] PROGMEM = 
 {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
@@ -105,9 +101,9 @@ void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT);
 
-  pinMode (encoderCLK,INPUT);
-  pinMode (encoderDT,INPUT);
-  pinMode (encoderSW, INPUT_PULLUP);
+  pinMode (pinA,INPUT);
+  pinMode (pinB,INPUT);
+  pinMode (pinPush, INPUT_PULLUP);
 
   Serial.begin(9600);
 
@@ -115,15 +111,14 @@ void setup()
 
   UpdateDisplay();
 
-  previousCLK = digitalRead(encoderCLK);
-  previousDT = digitalRead(encoderDT);
+  previousA = digitalRead(pinA);
 }
 
 void TryBeginDisplay() 
 {
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     Serial.println(F("SSD1306 allocation failed"));
-    // Don't proceed, blink forever
+    // Don't proceed; blink forever
     for(int i = 0; i > -1; ++i) {
       digitalWrite(LED_BUILTIN, i%2==0 == true ? LOW : HIGH);
       delay(500*((i%2)+1));
@@ -193,8 +188,8 @@ void DrawLife()
 
 void ShowDeath() 
 {
-  display.clearDisplay();
-  display.drawBitmap(0, 0,  zeroImage, 128, 64, WHITE);
+  display.clearDisplay(); //remove border already drawn
+  display.drawBitmap(0, 0,  deathImage, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
   //display.invertDisplay(1);
 }
 
@@ -208,12 +203,12 @@ void UpdateDisplay()
 
 bool IsRestarting() 
 {
-  SWstate = digitalRead(encoderSW);
-  if (SWstate == LOW && restarting == false)
+  pushState = digitalRead(pinPush);
+  if (pushState == LOW && restarting == false)
   {
     restarting = true;    
   }  
-  else if (SWstate == HIGH && restarting == true) 
+  else if (pushState == HIGH && restarting == true) 
   {
     ESP.restart();
   }
@@ -226,97 +221,27 @@ bool IsRestarting()
 
 void CheckRotary() 
 {
-  int currentCLK = digitalRead(encoderCLK);
-  int currentDT = digitalRead(encoderCLK);
-  
-  Serial.println(currentCLK);
-  Serial.println(currentDT);
-  Serial.println();
+  currentA = digitalRead(pinA);
+  currentB = digitalRead(pinB);
 
-  if (previousCLK == 0 && previousDT == 1) 
-  {
-    if (currentCLK == 1)
+  if ((currentA != previousA)&&(currentA==LOW)) 
+  { 
+    if(currentB == LOW)
     {
-      if (currentDT == 0)
-      {
-        IncrementLife();
-      }
-      else 
-      {
-        DecrementLife();
-      }
-
-      UpdateDisplay();
+      DecrementLife();
     }
-  }
-  else if (previousCLK == 1 && previousDT == 0) 
-  {
-    if (currentCLK == 0)
+    else 
     {
-      if (currentDT == 1)
-      {
-        IncrementLife();
-      }
-      else 
-      {
-        DecrementLife();
-      }
-
-      UpdateDisplay();
+      IncrementLife();
     }
-  }
-  else if (previousCLK == 1 && previousDT == 1)
-  {
-    if (currentCLK == 0)
-    {
-      if (currentDT == 1)
-      {
-        IncrementLife();
-      }
-      else 
-      {
-        DecrementLife();
-      }
 
-      UpdateDisplay();
-    }
-  }
-  else if (previousCLK == 1 && previousDT == 1)
-  {
-    if (currentCLK == 0)
-    {
-      if (currentDT == 1)
-      {
-        IncrementLife();
-      }
-      else 
-      {
-        DecrementLife();
-      }
-
-      UpdateDisplay();
-    }
-  }  
-  else if (previousCLK == 0 && previousDT == 0)
-  {
-    if (currentCLK == 1)
-    {
-      if (currentDT == 0)
-      {
-        IncrementLife();
-      }
-      else 
-      {
-        DecrementLife();
-      }
-
-      UpdateDisplay();
-    }
+    UpdateDisplay();
+    // Serial.print("PinA: "); Serial.print(currentA);
+    // Serial.print(" PinB: "); Serial.print(currentB);
+    // Serial.print(" Counter: ");Serial.println(life); 
   }
 
-  
-    previousCLK = currentCLK;
-    previousDT = currentDT;
+  previousA = currentA;
 }
 
 void loop() 
@@ -326,11 +251,5 @@ void loop()
     return;
   }
 
-  if (millis() - timeOfLastDebounce <= DelayOfDebounce) 
-  {
-    return;
-  }
-
   CheckRotary();
-  timeOfLastDebounce = millis();
 }
