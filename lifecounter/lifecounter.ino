@@ -22,11 +22,15 @@ int16_t cursorY = 8;
  #define encoderDT 2    //D4
  #define encoderSW 0    // D3
 
- int crntCLK;
- int prvsCLK;
- int SWstate = 0;
+int SWstate = 0;
 
- bool restarting = false;
+long timeOfLastDebounce = 0;
+int DelayOfDebounce = 0.01;
+
+int previousCLK;
+int previousDT;
+
+bool restarting = false;
 
 // 'Project1', 128x64px
 const unsigned char zeroImage [] PROGMEM = 
@@ -99,9 +103,11 @@ const unsigned char zeroImage [] PROGMEM =
 
 void setup()
 {
+  pinMode(LED_BUILTIN, OUTPUT);
+
   pinMode (encoderCLK,INPUT);
   pinMode (encoderDT,INPUT);
-  pinMode (encoderSW, INPUT);
+  pinMode (encoderSW, INPUT_PULLUP);
 
   Serial.begin(9600);
 
@@ -109,7 +115,8 @@ void setup()
 
   UpdateDisplay();
 
-  prvsCLK = digitalRead(encoderCLK);
+  previousCLK = digitalRead(encoderCLK);
+  previousDT = digitalRead(encoderDT);
 }
 
 void TryBeginDisplay() 
@@ -118,15 +125,10 @@ void TryBeginDisplay()
     Serial.println(F("SSD1306 allocation failed"));
     // Don't proceed, blink forever
     for(int i = 0; i > -1; ++i) {
-      LED(i%2==0);
+      digitalWrite(LED_BUILTIN, i%2==0 == true ? LOW : HIGH);
       delay(500*((i%2)+1));
     }
   }
-}
-
-void LED(bool lightUp) 
-{
-  digitalWrite(LED_BUILTIN, lightUp == true ? LOW : HIGH); //opposite for this board
 }
 
 void DecrementLife() 
@@ -204,12 +206,94 @@ void UpdateDisplay()
   display.display();
 }
 
+void CheckRotary() 
+{
+  if (previousCLK == 0 && previousDT == 1) 
+  {
+    if (digitalRead(encoderCLK) == 1)
+    {
+      if (digitalRead(encoderDT) == 0)
+      {
+        IncrementLife();
+      }
+      else 
+      {
+        DecrementLife();
+      }
+
+      UpdateDisplay();
+    }
+  }
+  else if (previousCLK == 1 && previousDT == 0) 
+  {
+    if (digitalRead(encoderCLK) == 0)
+    {
+      if (digitalRead(encoderDT) == 1)
+      {
+        IncrementLife();
+      }
+      else 
+      {
+        DecrementLife();
+      }
+
+      UpdateDisplay();
+    }
+  }
+  else if (previousCLK == 1 && previousDT == 1)
+  {
+    if (digitalRead(encoderCLK) == 0)
+    {
+      if (digitalRead(encoderDT) == 1)
+      {
+        IncrementLife();
+      }
+      else 
+      {
+        DecrementLife();
+      }
+
+      UpdateDisplay();
+    }
+  }
+    else if (previousCLK == 1 && previousDT == 1)
+  {
+    if (digitalRead(encoderCLK) == 0)
+    {
+      if (digitalRead(encoderDT) == 1)
+      {
+        IncrementLife();
+      }
+      else 
+      {
+        DecrementLife();
+      }
+
+      UpdateDisplay();
+    }
+  }  
+  else if (previousCLK == 0 && previousDT == 0)
+  {
+    if (digitalRead(encoderCLK) == 1)
+    {
+      if (digitalRead(encoderDT) == 0)
+      {
+        IncrementLife();
+      }
+      else 
+      {
+        DecrementLife();
+      }
+
+      UpdateDisplay();
+    }
+  }
+}
+
 void loop() 
 {
-  crntCLK = digitalRead(encoderCLK);
   SWstate = digitalRead(encoderSW);
-
-  if (SWstate == LOW)
+  if (SWstate == LOW && restarting == false)
   {
     restarting = true;    
     return;
@@ -219,24 +303,17 @@ void loop()
     ESP.restart();
     return;
   }
-
-  if (crntCLK == prvsCLK)
-  {
+  else if (restarting == true) {
     return;
   }
-  
-  //Encoder is rotating anti-clockwise
-  if (digitalRead(encoderDT) == crntCLK) 
+
+  if (millis() - timeOfLastDebounce > DelayOfDebounce) 
   {
-    DecrementLife();
-  } 
-  //Encoder is rotating clockwise
-  else  
-  {
-    IncrementLife();
+    CheckRotary();
+
+    previousCLK = digitalRead(encoderCLK);
+    previousDT = digitalRead(encoderDT);
+
+    timeOfLastDebounce = millis();
   }
-
-  prvsCLK = crntCLK;
-
-  UpdateDisplay();
 }
