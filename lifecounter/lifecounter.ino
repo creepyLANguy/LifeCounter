@@ -33,7 +33,7 @@ int previousA;
 int pushState = 0;
 bool restarting = false;
 
-int startingLife = 1;//AL. 40;
+int startingLife = 40;
 int maxLife = 999;
 int minLife = 0;
 int deathTrigger = 0;
