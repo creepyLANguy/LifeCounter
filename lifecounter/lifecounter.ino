@@ -249,7 +249,7 @@ void CheckRotary()
     // Serial.print(" Counter: ");Serial.println(life); 
 
     tone(pinBuzzer, buzzerTone);
-    delay (buzzerDelay; 
+    delay (buzzerDelay); 
     noTone(pinBuzzer);
   }
 
