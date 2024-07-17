@@ -25,6 +25,9 @@ int16_t cursorY = 8;
  // Buzzer 
 #define pinBuzzer 14 // D5
 
+int buzzerTone = 100;
+int buzzerDelay = 5;
+
 int currentA;
 int currentB;
 int previousA;
@@ -245,8 +248,8 @@ void CheckRotary()
     // Serial.print(" PinB: "); Serial.print(currentB);
     // Serial.print(" Counter: ");Serial.println(life); 
 
-    tone(pinBuzzer, 100);
-    delay (5); 
+    tone(pinBuzzer, buzzerTone);
+    delay (buzzerDelay; 
     noTone(pinBuzzer);
   }
 
