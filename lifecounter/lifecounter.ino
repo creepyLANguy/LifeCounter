@@ -22,6 +22,9 @@ int16_t cursorY = 8;
  #define pinB 2    //D4
  #define pinPush 0    // D3
 
+ // Buzzer 
+#define pinBuzzer 14 // D5
+
 int currentA;
 int currentB;
 int previousA;
@@ -101,8 +104,10 @@ void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT);
 
-  pinMode (pinA,INPUT);
-  pinMode (pinB,INPUT);
+  pinMode (pinBuzzer, OUTPUT) ;
+
+  pinMode (pinA, INPUT);
+  pinMode (pinB, INPUT);
   pinMode (pinPush, INPUT_PULLUP);
 
   Serial.begin(9600);
@@ -239,6 +244,10 @@ void CheckRotary()
     // Serial.print("PinA: "); Serial.print(currentA);
     // Serial.print(" PinB: "); Serial.print(currentB);
     // Serial.print(" Counter: ");Serial.println(life); 
+
+    tone(pinBuzzer, 100);
+    delay (5); 
+    noTone(pinBuzzer);
   }
 
   previousA = currentA;
