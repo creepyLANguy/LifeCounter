@@ -1,17 +1,14 @@
-#include <SPI.h>
-#include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 
-// Declaration for SSD1306 display connected using I2C
-#define OLED_RESET     -1 // Reset pin
+#define OLED_RESET     -1
 #define SCREEN_ADDRESS 0x3C
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-int16_t life = 40;
+unsigned long BAUD = 9600;
 
 int8_t textSize = 7;
 int16_t cursorX = 24;
@@ -34,6 +31,12 @@ int previousA;
 
 int pushState = 0;
 bool restarting = false;
+
+int startingLife = 40;
+int maxLife = 999;
+int minLife = 0;
+int deathTrigger = 0;
+int life = startingLife;
 
 const unsigned char deathImage [] PROGMEM = 
 {
@@ -107,13 +110,13 @@ void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT);
 
-  pinMode (pinBuzzer, OUTPUT) ;
+  pinMode (pinBuzzer, OUTPUT);
 
   pinMode (pinA, INPUT);
   pinMode (pinB, INPUT);
   pinMode (pinPush, INPUT_PULLUP);
 
-  Serial.begin(9600);
+  Serial.begin(BAUD);
 
   TryBeginDisplay();
 
@@ -124,10 +127,12 @@ void setup()
 
 void TryBeginDisplay() 
 {
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) 
+  {
     Serial.println(F("SSD1306 allocation failed"));
     // Don't proceed; blink forever
-    for(int i = 0; i > -1; ++i) {
+    for(int i = 0; i > -1; ++i) 
+    {
       digitalWrite(LED_BUILTIN, i%2==0 == true ? LOW : HIGH);
       delay(500*((i%2)+1));
     }
@@ -136,18 +141,12 @@ void TryBeginDisplay()
 
 void DecrementLife() 
 {
-  --life;
-  if(life < 0) {
-    life = 0;
-  } 
+  life = max(--life, minLife);
 }
 
 void IncrementLife() 
 {
-  ++life;
-  if(life > 999) {
-    life = 999;
-  } 
+  life = min(++life, maxLife);
 }
 
 void DrawBorder() 
@@ -160,8 +159,7 @@ void DrawBorder()
 
 void DrawLife() 
 {
-
-  if (life == 0) 
+  if (life == deathTrigger) 
   {
     ShowDeath();
     return;
@@ -196,7 +194,7 @@ void DrawLife()
 
 void ShowDeath() 
 {
-  display.clearDisplay(); //remove border already drawn
+  display.clearDisplay(); //remove border that was prolly already drawn
   display.drawBitmap(0, 0,  deathImage, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
   //display.invertDisplay(1);
 }
@@ -212,6 +210,7 @@ void UpdateDisplay()
 bool IsRestarting() 
 {
   pushState = digitalRead(pinPush);
+
   if (pushState == LOW && restarting == false)
   {
     restarting = true;    
@@ -220,11 +219,20 @@ bool IsRestarting()
   {
     ESP.restart();
   }
-  // else if (restarting == true) {
-  //   return true;
-  // }
 
   return restarting;
+}
+
+void PlayTone() 
+{
+  // if (life == deathTrigger) 
+  // {
+  //   return;
+  // }
+
+  tone(pinBuzzer, buzzerTone);
+  delay (buzzerDelay); 
+  noTone(pinBuzzer);
 }
 
 void CheckRotary() 
@@ -232,25 +240,13 @@ void CheckRotary()
   currentA = digitalRead(pinA);
   currentB = digitalRead(pinB);
 
-  if ((currentA != previousA)&&(currentA==LOW)) 
+  if (currentA != previousA && currentA == LOW) 
   { 
-    if(currentB == LOW)
-    {
-      DecrementLife();
-    }
-    else 
-    {
-      IncrementLife();
-    }
+    currentB == LOW ? DecrementLife() : IncrementLife();
 
-    UpdateDisplay();
-    // Serial.print("PinA: "); Serial.print(currentA);
-    // Serial.print(" PinB: "); Serial.print(currentB);
-    // Serial.print(" Counter: ");Serial.println(life); 
+    UpdateDisplay(); 
 
-    tone(pinBuzzer, buzzerTone);
-    delay (buzzerDelay); 
-    noTone(pinBuzzer);
+    PlayTone();
   }
 
   previousA = currentA;
