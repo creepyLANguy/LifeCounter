@@ -12,8 +12,6 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 unsigned long BAUD = 9600;
 
-#define PIN_UNCONNECTED 13
-
 int8_t textSize = 7;
 int16_t cursorX = 24;
 int16_t cursorY = 8;
@@ -46,7 +44,7 @@ bool hasDied = false;
 
 void setup()
 {
-  randomSeed(analogRead(PIN_UNCONNECTED));
+  randomSeed(GetRandomSeed());
 
   pinMode(LED_BUILTIN, OUTPUT);
 
@@ -65,6 +63,31 @@ void setup()
   previousA = digitalRead(pinA);
 
   PlayStartupMelody(pinBuzzer);
+}
+
+uint32_t GetRandomSeed()
+{
+  uint8_t  seedBitValue  = 0;
+  uint8_t  seedByteValue = 0;
+  uint32_t seedWordValue = 0;
+ 
+  for (uint8_t wordShift = 0; wordShift < 4; wordShift++)
+  {
+    for (uint8_t byteShift = 0; byteShift < 8; byteShift++)
+    {
+      for (uint8_t bitSum = 0; bitSum <= 8; bitSum++)
+      {
+        seedBitValue = seedBitValue + (analogRead(A0) & 0x01);
+      }
+      delay(1);
+      seedByteValue = seedByteValue | ((seedBitValue & 0x01) << byteShift);
+      seedBitValue = 0;
+    }
+    seedWordValue = seedWordValue | (uint32_t)seedByteValue << (8 * wordShift);
+    seedByteValue = 0;
+  }
+
+  return seedWordValue;
 }
 
 void TryBeginDisplay() 
