@@ -91,8 +91,8 @@
 
 int startupMelody[] = 
 { 
-  NOTE_E5,8, NOTE_E5,8, REST,8, NOTE_E5,8, REST,8, NOTE_C5,8, NOTE_E5,6, //1
-  NOTE_G5,4, REST,4, NOTE_G4,8, REST,6, 
+  NOTE_E5,8, NOTE_E5,8, REST,8, NOTE_E5,8, REST,8, NOTE_C5,8, NOTE_E5,8, REST,8,
+  NOTE_G5,8, REST,3, NOTE_G4,8,
 };
 int startupNotes = sizeof(startupMelody) / sizeof(startupMelody[0]) / 2;
 int startupTempo = 180;
@@ -102,7 +102,7 @@ int startupNoteDuration = 0;
 
 int deathMelody[] = 
 { 
-  NOTE_C5,-4, NOTE_G4,-4, NOTE_E4,4, //45
+  NOTE_C5,-4, NOTE_G4,-4, NOTE_E4,4,
   NOTE_A4,-8, NOTE_B4,-8, NOTE_A4,-8, NOTE_GS4,-8, NOTE_AS4,-8, NOTE_GS4,-8,
   NOTE_G4,8, NOTE_D4,8, NOTE_E4,-2,
 };

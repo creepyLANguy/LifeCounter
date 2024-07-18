@@ -12,6 +12,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 unsigned long BAUD = 9600;
 
+#define PIN_UNCONNECTED 13
+
 int8_t textSize = 7;
 int16_t cursorX = 24;
 int16_t cursorY = 8;
@@ -44,6 +46,8 @@ bool hasDied = false;
 
 void setup()
 {
+  randomSeed(analogRead(PIN_UNCONNECTED));
+
   pinMode(LED_BUILTIN, OUTPUT);
 
   pinMode (pinBuzzer, OUTPUT);
@@ -52,7 +56,7 @@ void setup()
   pinMode (pinB, INPUT);
   pinMode (pinPush, INPUT_PULLUP);
 
-  Serial.begin(BAUD);
+  //Serial.begin(BAUD);
 
   TryBeginDisplay();
 
@@ -65,12 +69,13 @@ void setup()
 
 void TryBeginDisplay() 
 {
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) 
+  if(display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS) == false) 
   {
-    Serial.println(F("SSD1306 allocation failed"));
-    // Don't proceed; blink forever
+    //Serial.println(F("SSD1306 allocation failed"));    
+    // Don't proceed; blink and buzz forever
     for(int i = 0; i > -1; ++i) 
     {
+      tone(pinBuzzer, i%2==0 == true ? 0 : 100);
       digitalWrite(LED_BUILTIN, i%2==0 == true ? LOW : HIGH);
       delay(500*((i%2)+1));
     }
@@ -133,7 +138,7 @@ void DrawLife()
 void ShowDeath() 
 {
   display.clearDisplay(); //remove border that was prolly already drawn
-  display.drawBitmap(0, 0,  deathImage, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
+  display.drawBitmap(0, 0, allImagesArray[random(allImagesArrayLength)], SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
   //display.invertDisplay(1);
 }
 
