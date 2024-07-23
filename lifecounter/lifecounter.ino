@@ -164,7 +164,7 @@ void DrawLife()
 void ShowDeath() 
 {
   display.clearDisplay(); //remove border that was prolly already drawn
-  display.drawBitmap(0, 0, allImagesArray[(++deathImageIndex)%deathImagesArrayLength], SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
+  display.drawBitmap(0, 0, deathImagesArray[(++deathImageIndex)%deathImagesArrayLength], SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
   //display.invertDisplay(1);
 }
 
