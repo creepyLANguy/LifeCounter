@@ -402,8 +402,8 @@ const unsigned char  youdied [] PROGMEM = {
 };
 
 // Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = 6240)
-const int  allImagesArrayLength = 6;
-const unsigned char*  allImagesArray[6] = {
+const int  deathImagesArrayLength = 6;
+const unsigned char*  deathImagesArray[6] = {
 	 bear,
 	 fish,
 	 heart,

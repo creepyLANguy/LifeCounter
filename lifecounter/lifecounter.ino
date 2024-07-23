@@ -40,11 +40,14 @@ int minLife = 0;
 int deathTrigger = 0;
 int life = startingLife;
 
+int deathImageIndex;
+
 bool hasDied = false;
 
 void setup()
 {
   randomSeed(GetRandomSeed());
+  deathImageIndex = random(deathImagesArrayLength);
 
   pinMode(LED_BUILTIN, OUTPUT);
 
@@ -161,7 +164,7 @@ void DrawLife()
 void ShowDeath() 
 {
   display.clearDisplay(); //remove border that was prolly already drawn
-  display.drawBitmap(0, 0, allImagesArray[random(allImagesArrayLength)], SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
+  display.drawBitmap(0, 0, allImagesArray[(++deathImageIndex)%deathImagesArrayLength], SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
   //display.invertDisplay(1);
 }
 
